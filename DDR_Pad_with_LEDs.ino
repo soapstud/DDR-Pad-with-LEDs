@@ -1,6 +1,15 @@
 #include <Joystick.h>
 #include <inttypes.h>
 
+int counter = 0;
+const int UpbuttonPin = 8;
+int DownbuttonState = 0;
+int DownlastButtonState = 0;
+const int DownbuttonPin = 9;
+int UpbuttonState = 0;
+int UplastButtonState = 0;
+
+
 /*===========================================================================*/
 /*LED SETUP*/
 
@@ -742,7 +751,7 @@ long loopTime = -1;
 void setup() {
 
   // Add the LEDs
-  FastLED.addLeds<WS2812B, DATA_PIN, RGB>(leds, NUM_LEDS).setCorrection(TypicalSMD5050).setTemperature(CarbonArc);
+  FastLED.addLeds<WS2812B, DATA_PIN, GRB>(leds, NUM_LEDS).setCorrection(TypicalSMD5050).setTemperature(CarbonArc);
   // FastLED provides these pre-conigured incandescent color profiles:
   //     Candle, Tungsten40W, Tungsten100W, Halogen, CarbonArc,
   //     HighNoonSun, DirectSunlight, OvercastSky, ClearBlueSky,
@@ -755,6 +764,9 @@ void setup() {
 
   // Set each light to its idle color on start
   setIdleColors();
+
+  pinMode(UpbuttonPin, INPUT);
+  pinMode(DownbuttonPin, INPUT);
 
   SerialProcessor.Init(kBaudRate);
   ButtonStart();
@@ -790,5 +802,39 @@ void loop() {
 
   if (loopTime == -1) {
     loopTime = micros() - startMicros;
+  }
+  
+  UpbuttonState = digitalRead(UpbuttonPin);
+  if (UpbuttonState != UplastButtonState) {
+    if(UpbuttonState == HIGH){
+      counter++;
+      //Reset count if over max mode number
+      if(counter == 26)
+      {
+        counter = 0;
+      }
+      COLOR_PROFILE = counter;
+      // Set the new idle colors
+      setIdleColors();
+      Serial.print(counter);
+      delay(200);
+    }
+  }
+  DownbuttonState = digitalRead(DownbuttonPin);
+  if (DownbuttonState != DownlastButtonState) {
+    if(DownbuttonState == HIGH)
+    {
+      counter--;
+      //Reset count if over max mode number
+      if(counter == -1)
+      {
+        counter = 25;
+      }
+      COLOR_PROFILE = counter;
+      // Set the new idle colors
+      setIdleColors();
+      Serial.print(counter);
+      delay(200);
+    }
   }
 }
