@@ -2,10 +2,12 @@
 #include <inttypes.h>
 
 int counter = 0;
-const int UpbuttonPin = 8;
+
+const int DownbuttonPin = 9;
 int DownbuttonState = 0;
 int DownlastButtonState = 0;
-const int DownbuttonPin = 9;
+
+const int UpbuttonPin = 8;
 int UpbuttonState = 0;
 int UplastButtonState = 0;
 
@@ -50,7 +52,7 @@ enum Panelnum {
 
 
 // Set the color profile for the lights
-int COLOR_PROFILE = 0;
+int COLOR_PROFILE = 26;
 
 // Re-usable palletes
 CRGB ALL_WHITE[5] = { CRGB::White, CRGB::White, CRGB::White, CRGB::White, CRGB::White };
@@ -59,6 +61,20 @@ CRGB ALL_RED[5] = { CRGB::Red, CRGB::Red, CRGB::Red, CRGB::Red, CRGB::Red };
 CRGB ALL_BLUE[5] = { CRGB::Blue, CRGB::Blue, CRGB::Blue, CRGB::Blue, CRGB::Blue };
 CRGB ALL_GREEN[5] = { CRGB::Green, CRGB::Green, CRGB::Green, CRGB::Green, CRGB::Green };
 CRGB ALL_GOLD[5] = { CRGB::Gold, CRGB::Gold, CRGB::Gold, CRGB::Gold, CRGB::Gold };
+
+uint8_t hue = 0;
+void rainbowCycle() {
+  for (int i = 0; i < NUM_LEDS; ++i) {
+    leds[i] = CHSV(hue + (i * 10), 255, 255);
+  }
+  EVERY_N_MILLISECONDS(15) {
+    hue++;
+  }
+
+  FastLED.show();
+}
+
+int color_profile_count = 26;
 
 // Idle lights, light up when the panel isn't being pressed
 CRGB IDLE_COLORS[][5] = {
@@ -73,65 +89,79 @@ CRGB IDLE_COLORS[][5] = {
   /* 7  Prncss */ { CRGB::MediumPurple, CRGB::MediumPurple, CRGB::MediumPurple, CRGB::MediumPurple, CRGB::Magenta },
   /* 8  Navi   */ { CRGB::Blue, CRGB::Blue, CRGB::Blue, CRGB::Blue, CRGB::Green },
   /* 9  USA    */ { CRGB::Red, CRGB::Red, CRGB::Red, CRGB::Red, CRGB::Blue },
-  /* 10 Y->BLK */ ALL_GOLD,
-  /* 11 R->BLK */ ALL_RED,
-  /* 12 B->BLK */ ALL_BLUE,
-  /* 13 G->BLK */ ALL_GREEN,
-  /* 14 W->BLK */ ALL_WHITE,
-  /* 15 BLK->W */ ALL_BLACK,
-  /* 16 BLK->R */ ALL_BLACK,
-  /* 17 BLK->B */ ALL_BLACK,
-  /* 18 BLK->G */ ALL_BLACK,
-  /* 19 BLK->DR*/ ALL_BLACK,
-  /* 20 BLK->IT*/ ALL_BLACK,
-  /* 21 RED->BL*/ ALL_RED,
-  /* 22 BLU->RD*/ ALL_BLUE,
-  /* 23 RED->GN*/ ALL_RED,
-  /* 24 GRE->RD*/ ALL_GREEN,
-  /* 25 YEL->RD*/ ALL_GOLD,
+  /* 10 Y->BLK */  ALL_GOLD,
+  /* 11 R->BLK */  ALL_RED,
+  /* 12 B->BLK */  ALL_BLUE,
+  /* 13 G->BLK */  ALL_GREEN,
+  /* 14 W->BLK */  ALL_WHITE,
+  /* 15 BLK->W */  ALL_BLACK,
+  /* 16 BLK->R */  ALL_BLACK,
+  /* 17 BLK->B */  ALL_BLACK,
+  /* 18 BLK->G */  ALL_BLACK,
+  /* 19 BLK->DR*/  ALL_BLACK,
+  /* 20 BLK->IT*/  ALL_BLACK,
+  /* 21 RED->BL*/  ALL_RED,
+  /* 22 BLU->RD*/  ALL_BLUE,
+  /* 23 RED->GN*/  ALL_RED,
+  /* 24 GRE->RD*/  ALL_GREEN,
+  /* 25 YEL->RD*/  ALL_GOLD,
+  /* 26 rainbow*/ 
 };
 
 // Active lights, light up when the panel is pressed
 CRGB ACTIVE_COLORS[][5] = {
   // Left,             Up,               Down,             Right,            Center
-  /* 0  Test   */ ALL_WHITE,
-  /* 1  ITG    */ ALL_WHITE,
-  /* 2  DDR    */ ALL_WHITE,
-  /* 3  Brazil */ ALL_WHITE,
-  /* 4  Frozen */ { CRGB::Blue, CRGB::Blue, CRGB::Blue, CRGB::Blue, CRGB::Blue },
-  /* 5  Italy  */ { CRGB::Blue, CRGB::Blue, CRGB::Blue, CRGB::Blue, CRGB::Blue },
-  /* 6  One    */ ALL_WHITE,
-  /* 7  Prncss */ { CRGB::Gold, CRGB::Gold, CRGB::Gold, CRGB::Gold, CRGB::Gold },
-  /* 8  Navi   */ ALL_WHITE,
-  /* 9  USA    */ ALL_WHITE,
-  /* 10 Y->BLK */ ALL_BLACK,
-  /* 11 R->BLK */ ALL_BLACK,
-  /* 12 B->BLK */ ALL_BLACK,
-  /* 13 G->BLK */ ALL_BLACK,
-  /* 14 W->BLK */ ALL_BLACK,
-  /* 15 BLK->W */ ALL_WHITE,
-  /* 16 BLK->R */ ALL_RED,
-  /* 17 BLK->B */ ALL_BLUE,
-  /* 18 BLK->G */ ALL_GREEN,
-  /* 19 BLK->DR*/ { CRGB::DeepSkyBlue, CRGB::DeepPink, CRGB::DeepPink, CRGB::DeepSkyBlue, CRGB::Black },
-  /* 20 BLK->IT*/ { CRGB::Blue, CRGB::Red, CRGB::Red, CRGB::Blue, CRGB::Black },
-  /* 21 RED->BL*/ ALL_BLUE,
-  /* 22 BLU->RD*/ ALL_RED,
-  /* 23 RED->GN*/ ALL_GREEN,
-  /* 24 GRE->RD*/ ALL_RED,
-  /* 25 YEL->RD*/ ALL_RED,
+  /* 0  Test   */  ALL_WHITE,
+  /* 1  ITG    */  ALL_WHITE,
+  /* 2  DDR    */  ALL_WHITE,
+  /* 3  Brazil */  ALL_WHITE,
+  /* 4  Frozen */  { CRGB::Blue, CRGB::Blue, CRGB::Blue, CRGB::Blue, CRGB::Blue },
+  /* 5  Italy  */  { CRGB::Blue, CRGB::Blue, CRGB::Blue, CRGB::Blue, CRGB::Blue },
+  /* 6  One    */  ALL_WHITE,
+  /* 7  Prncss */  { CRGB::Gold, CRGB::Gold, CRGB::Gold, CRGB::Gold, CRGB::Gold },
+  /* 8  Navi   */  ALL_WHITE,
+  /* 9  USA    */  ALL_WHITE,
+  /* 10 Y->BLK */  ALL_BLACK,
+  /* 11 R->BLK */  ALL_BLACK,
+  /* 12 B->BLK */  ALL_BLACK,
+  /* 13 G->BLK */  ALL_BLACK,
+  /* 14 W->BLK */  ALL_BLACK,
+  /* 15 BLK->W */  ALL_WHITE,
+  /* 16 BLK->R */  ALL_RED,
+  /* 17 BLK->B */  ALL_BLUE,
+  /* 18 BLK->G */  ALL_GREEN,
+  /* 19 BLK->DR*/  { CRGB::DeepSkyBlue, CRGB::DeepPink, CRGB::DeepPink, CRGB::DeepSkyBlue, CRGB::Black },
+  /* 20 BLK->IT*/  { CRGB::Blue, CRGB::Red, CRGB::Red, CRGB::Blue, CRGB::Black },
+  /* 21 RED->BL*/  ALL_BLUE,
+  /* 22 BLU->RD*/  ALL_RED,
+  /* 23 RED->GN*/  ALL_GREEN,
+  /* 24 GRE->RD*/  ALL_RED,
+  /* 25 YEL->RD*/  ALL_RED,
+  /* 26 rainbow*/ 
 };
+
+
 void panel_active(uint32_t panel) {
 
   for (int i = LED_Range[panel].LEDstart; i <= LED_Range[panel].LEDend; i++) {
-    leds[i] = ACTIVE_COLORS[COLOR_PROFILE][panel];
+    if (COLOR_PROFILE <26) {
+      leds[i] = ACTIVE_COLORS[COLOR_PROFILE][panel];
+        }
+    // if (COLOR_PROFILE ==26) {
+    //  rainbowCycle();
+    // }
   };
 }
 
 void panel_idle(uint32_t panel) {
 
   for (int i = LED_Range[panel].LEDstart; i <= LED_Range[panel].LEDend; i++) {
-    leds[i] = IDLE_COLORS[COLOR_PROFILE][panel];
+    if (COLOR_PROFILE <26) {
+     leds[i] = IDLE_COLORS[COLOR_PROFILE][panel];
+    }
+    // if (COLOR_PROFILE ==26) {
+    //  rainbowCycle();
+    // }
   };
 }
 
@@ -809,7 +839,7 @@ void loop() {
     if(UpbuttonState == HIGH){
       counter++;
       //Reset count if over max mode number
-      if(counter == 26)
+      if(counter == color_profile_count+1)
       {
         counter = 0;
       }
@@ -828,7 +858,7 @@ void loop() {
       //Reset count if over max mode number
       if(counter == -1)
       {
-        counter = 25;
+        counter = color_profile_count;
       }
       COLOR_PROFILE = counter;
       // Set the new idle colors
@@ -837,4 +867,11 @@ void loop() {
       delay(200);
     }
   }
+
+if (COLOR_PROFILE == 26)  {
+  rainbowCycle();
+}
+  
+
+  
 }
